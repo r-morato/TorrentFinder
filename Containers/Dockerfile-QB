@@ -1,0 +1,13 @@
+# Use the official qbittorrent image from Docker Hub
+FROM linuxserver/qbittorrent:latest
+
+# Set environment variables for qBittorrent
+ENV WEBUI_PORT=8080
+ENV USER=admin
+ENV PASSWORD=adminadmin
+
+# Expose the necessary ports
+EXPOSE 8080 6881 6881/udp
+
+# Start qBittorrent
+CMD ["qbittorrent-nox", "--webui-port=8080"]
