@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Movie Downloader</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-image: url('https://mrwallpaper.com/images/file/collage-of-movie-posters-g2fdqahxlakaa7yq.jpg'); /* Background image URL */
+            background-repeat: repeat; /* Repeat the background image */
+            background-size: auto; /* Ensure image size is maintained */
+            background-attachment: fixed; /* Keep the image fixed while scrolling */
+            background-position: center; /* Center the image */
+            margin: 0;
+            padding: 20px;
+            color: white; /* Ensure text is visible on background */
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+        .title-box {
+            background-color: rgba(0, 0, 0, 0.9); /* Darker semi-transparent background for better visibility */
+            padding: 30px;
+            border-radius: 8px;
+            width: 80%;
+            max-width: 600px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .title-box h1 {
+            margin: 0;
+            font-size: 2em;
+        }
+        .search-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+        #search {
+            width: 300px;
+            padding: 10px;
+            font-size: 16px;
+        }
+        button {
+            padding: 10px 20px;
+            margin-left: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .results-box {
+            background-color: rgba(0, 0, 0, 0.8); /* Darker semi-transparent background for better visibility */
+            padding: 20px;
+            border-radius: 8px;
+            width: 80%;
+            max-width: 600px;
+            text-align: center;
+            display: none; /* Initially hidden */
+        }
+        #results {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .movie {
+            background-color: rgba(255, 255, 255, 0.8); /* Semi-transparent background */
+            padding: 15px;
+            margin: 10px;
+            width: 80%;
+            max-width: 600px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            position: relative;
+        }
+        .movie h3 {
+            margin: 0 0 10px 0;
+            color: black; /* Change text color to black */
+        }
+        .movie .qualities {
+            margin-top: 10px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .movie .qualities button {
+            padding: 8px 15px;
+            background-color: #28a745;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            color: white;
+        }
+        .movie .qualities button:hover {
+            background-color: #218838;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="title-box">
+            <h1>Movie Downloader</h1>
+            <div class="search-container">
+                <input type="text" id="search" placeholder="Search for movies...">
+                <button onclick="searchMovies()">Submit</button>
+            </div>
+        </div>
+        <div class="results-box" id="results-box">
+            <div id="results"></div>
+        </div>
+    </div>
+
+    <script>
+        function searchMovies() {
+            const query = document.getElementById('search').value;
+            fetch(`/search?query=${encodeURIComponent(query)}`)
+                .then(response => response.json())
+                .then(data => displayResults(data))
+                .catch(error => console.error('Error:', error));
+        }
+
+        function displayResults(data) {
+            const resultsBox = document.getElementById('results-box');
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '';
+
+            if (data.data && data.data.movies) {
+                resultsBox.style.display = 'block'; // Show the results box
+
+                data.data.movies.forEach(movie => {
+                    const movieDiv = document.createElement('div');
+                    movieDiv.classList.add('movie');
+
+                    const title = document.createElement('h3');
+                    title.textContent = movie.title;
+                    movieDiv.appendChild(title);
+
+                    // Create quality buttons
+                    const qualityDiv = document.createElement('div');
+                    qualityDiv.classList.add('qualities');
+
+                    movie.torrents.forEach(torrent => {
+                        const qualityButton = document.createElement('button');
+                        qualityButton.textContent = `Download ${torrent.quality}`;
+                        qualityButton.onclick = () => downloadMovie(torrent.hash, movie.title);
+                        qualityDiv.appendChild(qualityButton);
+                    });
+
+                    movieDiv.appendChild(qualityDiv);
+                    resultsDiv.appendChild(movieDiv);
+                });
+            } else {
+                resultsBox.style.display = 'none'; // Hide the results box if no results
+                resultsDiv.innerHTML = 'No results found';
+            }
+        }
+
+        function downloadMovie(torrentHash, movieName) {
+            fetch('/download', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ torrent_hash: torrentHash, movie_name: movieName }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.message) {
+                    alert('Download started successfully!');
+                } else {
+                    alert(`Error: ${data.error}`);
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        }
+    </script>
+</body>
+</html>
